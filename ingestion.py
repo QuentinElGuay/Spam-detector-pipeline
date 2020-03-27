@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 
@@ -6,11 +7,11 @@ import pandas as pd
 import pyorc
 
 
-DETECT_LANGUAGE_API_KEY = "Get your API Key at https://detectlanguage.com/private"
+DETECT_LANGUAGE_API_KEY = "c64ffa8ca8122a0b0666c56b6f622d1f"
 detectlanguage.configuration.api_key = DETECT_LANGUAGE_API_KEY
-ORC_FILE = "./new_data.orc"
+ORC_FILE = "./spambase_{}.orc"
 
-source_file_path = sys.argv[1]
+source_file_path = "/home/quentin/Dev/NLP/spam-detector/spambase.csv"  # sys.argv[1]
 if not os.path.isfile(source_file_path):
     print(f"Wrong file path {source_file_path}, exit script.")
     exit()
@@ -20,6 +21,9 @@ offset = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 
 dl_user_status = detectlanguage.user_status()
 available_requests = dl_user_status['daily_requests_limit'] - dl_user_status['requests']
+if available_requests == 0:
+    print("Quota of requests at DetectLanguage exhausted for today.")
+    exit()
 
 df = pd.read_csv(source_file_path, header=0)
 nb_lines = min(available_requests, len(df) - offset, max_requests)
@@ -27,11 +31,11 @@ nb_lines = min(available_requests, len(df) - offset, max_requests)
 df = df[offset:offset + nb_lines].copy().reset_index(drop=True)
 
 response = detectlanguage.detect(df["Text"].values.tolist())
-first_languages = list(map(lambda x: x[0] if x is not None else {'isReliable': False, 'confidence': 0, 'language': ''}, response))
+first_languages = list(map(lambda x: x[0] if x else {'isReliable': False, 'confidence': 0, 'language': ''}, response))
 
 new_df = pd.concat([df, pd.DataFrame(first_languages)], axis=1)
 
-with open(ORC_FILE, "wb") as data:
+with open(ORC_FILE.format(datetime.now().strftime("%y%m%d")), "wb") as data:
     with pyorc.Writer(
         data,
         "struct<text:string,isSpam:boolean,language:string,isReliable:boolean,confidence:float>",
