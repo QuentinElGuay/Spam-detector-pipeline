@@ -1,2 +1,3 @@
 .vscode/
 *.orc
+.python-version

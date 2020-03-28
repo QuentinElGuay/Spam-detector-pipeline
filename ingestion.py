@@ -11,7 +11,7 @@ DETECT_LANGUAGE_API_KEY = "c64ffa8ca8122a0b0666c56b6f622d1f"
 detectlanguage.configuration.api_key = DETECT_LANGUAGE_API_KEY
 ORC_FILE = "./spambase_{}.orc"
 
-source_file_path = "/home/quentin/Dev/NLP/spam-detector/spambase.csv"  # sys.argv[1]
+source_file_path = sys.argv[1]
 if not os.path.isfile(source_file_path):
     print(f"Wrong file path {source_file_path}, exit script.")
     exit()
