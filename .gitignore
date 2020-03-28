@@ -1,3 +1,4 @@
 .vscode/
 *.orc
 .python-version
+__pycache__/

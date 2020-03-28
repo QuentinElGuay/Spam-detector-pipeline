@@ -7,9 +7,9 @@ import pandas as pd
 import pyorc
 
 
-DETECT_LANGUAGE_API_KEY = "c64ffa8ca8122a0b0666c56b6f622d1f"
+DETECT_LANGUAGE_API_KEY = "GET YOUT API KEY AT DETECTLANGUAGE.COM"
 detectlanguage.configuration.api_key = DETECT_LANGUAGE_API_KEY
-ORC_FILE = "./spambase_{}.orc"
+ORC_FILE = "out/spambase_{}.orc"
 
 source_file_path = sys.argv[1]
 if not os.path.isfile(source_file_path):
@@ -35,7 +35,8 @@ first_languages = list(map(lambda x: x[0] if x else {'isReliable': False, 'confi
 
 new_df = pd.concat([df, pd.DataFrame(first_languages)], axis=1)
 
-with open(ORC_FILE.format(datetime.now().strftime("%y%m%d")), "wb") as data:
+orc_file = ORC_FILE.format(datetime.now().strftime("%y%m%d"))
+with open(orc_file, "wb") as data:
     with pyorc.Writer(
         data,
         "struct<text:string,isSpam:boolean,language:string,isReliable:boolean,confidence:float>",
@@ -45,6 +46,8 @@ with open(ORC_FILE.format(datetime.now().strftime("%y%m%d")), "wb") as data:
             writer.write((row['Text'], row['isSpam'], row['language'], row['isReliable'], row['confidence']))
 
 new_df.to_csv(index=True)
+print(f"Saved {len(new_df)} messages in {orc_file}.")
+
 
 
 ## For the future, to read the dataset
