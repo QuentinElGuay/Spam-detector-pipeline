@@ -7,17 +7,17 @@ import pandas as pd
 import pyorc
 
 
-DETECT_LANGUAGE_API_KEY = "GET YOUT API KEY AT DETECTLANGUAGE.COM"
+DETECT_LANGUAGE_API_KEY = "c6e79e234e81e160db81454d80ae611d"
 detectlanguage.configuration.api_key = DETECT_LANGUAGE_API_KEY
 ORC_FILE = "out/spambase_{}.orc"
 
-source_file_path = sys.argv[1]
+source_file_path = "/home/quentin/Dev/Spam-detector-pipeline/validation.csv"  # sys.argv[1]
 if not os.path.isfile(source_file_path):
     print(f"Wrong file path {source_file_path}, exit script.")
     exit()
 
-max_requests = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
-offset = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+max_requests = 1000  # int(sys.argv[2]) if len(sys.argv) > 2 else 1000
+offset = 0  # int(sys.argv[3]) if len(sys.argv) > 3 else 0
 
 dl_user_status = detectlanguage.user_status()
 available_requests = dl_user_status['daily_requests_limit'] - dl_user_status['requests']
@@ -30,7 +30,7 @@ nb_lines = min(available_requests, len(df) - offset, max_requests)
 
 df = df[offset:offset + nb_lines].copy().reset_index(drop=True)
 
-response = detectlanguage.detect(df["Text"].values.tolist())
+response = detectlanguage.detect(df["text"].values.tolist())
 first_languages = list(map(lambda x: x[0] if x else {'isReliable': False, 'confidence': 0, 'language': ''}, response))
 
 new_df = pd.concat([df, pd.DataFrame(first_languages)], axis=1)
@@ -43,7 +43,7 @@ with open(orc_file, "wb") as data:
         compression=pyorc.CompressionKind.ZLIB
     ) as writer:
         for index, row in new_df.iterrows():
-            writer.write((row['Text'], row['isSpam'], row['language'], row['isReliable'], row['confidence']))
+            writer.write((row['text'], row['isSpam'], row['language'], row['isReliable'], row['confidence']))
 
 new_df.to_csv(index=True)
 print(f"Saved {len(new_df)} messages in {orc_file}.")
